@@ -1,0 +1,7 @@
+[build]
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/predict"
+  to = "/.netlify/functions/predict"
+  status = 200

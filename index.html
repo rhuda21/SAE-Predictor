@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steal An Egg - Predictor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-slate-950 text-slate-100 min-h-screen p-4 sm:p-8 font-sans antialiased selection:bg-amber-500 selection:text-slate-950">
+    <div class="max-w-6xl mx-auto space-y-8 pb-32">
+
+        <header
+            class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
+            <div>
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🥚</span>
+                    <h1
+                        class="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-200 to-yellow-500">
+                        Steal An Egg Predictor
+                    </h1>
+                </div>
+                <p class="text-slate-400 text-sm mt-1">Real-time spawn cycle calculator and rotation tracker.</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- API Help Button -->
+                <button id="openApiModalBtn"
+                    class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-amber-400 hover:text-amber-300 rounded-xl px-4 py-2 text-xs font-semibold flex items-center gap-2 transition cursor-pointer shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                    <span>API Help</span>
+                </button>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 flex items-center gap-2">
+                    <span class="text-xs font-semibold text-amber-400">★ Favorites Saved:</span>
+                    <span id="favBadgeCount"
+                        class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-md text-[10px] font-mono">0</span>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 flex items-center gap-2">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Timezone:</span>
+                    <span id="userTimezone" class="text-xs font-mono font-medium text-amber-300">Detecting...</span>
+                </div>
+            </div>
+        </header>
+
+        <div
+            class="relative z-20 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <div class="relative">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                        Select Egg Names
+                    </label>
+                    <button type="button" id="namesDropdownBtn"
+                        class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-amber-400 text-slate-100 rounded-xl px-4 py-3 text-sm flex justify-between items-center transition shadow-inner">
+                        <span id="namesDropdownLabel" class="truncate text-slate-500">Loading Eggs...</span>
+                        <svg class="w-4 h-4 ml-2 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+
+                    <div id="namesDropdownMenu"
+                        class="hidden absolute left-0 right-0 z-50 mt-2 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl p-3 space-y-2">
+                        <input type="text" id="namesSearchInput" placeholder="Search egg name..."
+                            class="w-full bg-slate-900 border border-slate-800 focus:border-amber-400 text-xs text-slate-100 rounded-lg px-3 py-2 outline-none" />
+                        <div id="namesListContainer" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                        Select Rarities
+                    </label>
+                    <button type="button" id="raritiesDropdownBtn"
+                        class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-amber-400 text-slate-100 rounded-xl px-4 py-3 text-sm flex justify-between items-center transition shadow-inner">
+                        <span id="raritiesDropdownLabel" class="truncate text-slate-500">Loading Rarities...</span>
+                        <svg class="w-4 h-4 ml-2 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+
+                    <div id="raritiesDropdownMenu"
+                        class="hidden absolute left-0 right-0 z-50 mt-2 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl p-3 space-y-2">
+                        <input type="text" id="raritiesSearchInput" placeholder="Search rarity..."
+                            class="w-full bg-slate-900 border border-slate-800 focus:border-amber-400 text-xs text-slate-100 rounded-lg px-3 py-2 outline-none" />
+                        <div id="raritiesListContainer" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button id="searchBtn"
+                    class="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold px-8 py-3 rounded-xl text-sm transition-all duration-200 shadow-lg shadow-amber-500/10 active:scale-95 flex items-center justify-center gap-2">
+                    <span>Calculate Spawn Times</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="errorAlert"
+            class="hidden bg-red-950/40 border border-red-500/30 text-red-300 px-5 py-4 rounded-xl text-sm backdrop-blur">
+        </div>
+
+        <div
+            class="relative z-0 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead
+                        class="bg-slate-950 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                        <tr>
+                            <th scope="col" class="px-4 py-4 w-12 text-center">Fav</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Egg Name</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Rarity</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Spawn Location</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Local Spawn Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody" class="divide-y divide-slate-800/60">
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+                                Select egg names or rarities above to fetch predictions.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- API Help Modal Window -->
+    <div id="apiModal"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+        <div
+            class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto custom-scrollbar p-6 space-y-6 shadow-2xl relative">
+
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-amber-400 text-xl font-mono">&lt;/&gt;</span>
+                    <h3 class="text-lg font-bold text-slate-100">API Documentation</h3>
+                </div>
+                <button id="closeApiModalBtn"
+                    class="text-slate-400 hover:text-slate-200 text-xl font-bold px-2">&times;</button>
+            </div>
+
+            <div class="space-y-4 text-xs text-slate-300">
+                <div>
+                    <h4 class="font-bold text-amber-400 uppercase tracking-wider mb-1">Endpoint</h4>
+                    <p class="font-mono bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-emerald-400">GET
+                        /api/predict</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-200 uppercase tracking-wider mb-2">Query Parameters</h4>
+                    <div class="space-y-2 border border-slate-800 rounded-lg p-3 bg-slate-950/50">
+                        <div>
+                            <span class="font-mono text-amber-300">names</span>
+                            <span class="text-slate-500">(string, optional)</span>
+                            <p class="text-slate-400 mt-0.5">Comma-separated egg keys (e.g., <code
+                                    class="text-slate-300 font-mono">DragonEgg,GoldenEgg</code>).</p>
+                        </div>
+                        <div class="border-t border-slate-800/60 pt-2">
+                            <span class="font-mono text-amber-300">rarities</span>
+                            <span class="text-slate-500">(string, optional)</span>
+                            <p class="text-slate-400 mt-0.5">Comma-separated rarity levels (e.g., <code
+                                    class="text-slate-300 font-mono">Legendary,Mythic</code>).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-200 uppercase tracking-wider mb-1">Example Request (cURL)</h4>
+                    <pre
+                        class="bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-slate-300 overflow-x-auto">curl -X GET "https://yourdomain.com/api/predict?names=DragonEgg&rarities=Legendary"</pre>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-200 uppercase tracking-wider mb-1">Response Format (JSON)</h4>
+                    <pre
+                        class="bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-slate-300 overflow-x-auto max-h-40 custom-scrollbar">{
+  "data": [
+    {
+      "eggKey": "DragonEgg",
+      "displayName": "Dragon Egg",
+      "rarity": "Legendary",
+      "availableAreas": ["Volcano"],
+      "rawPrediction": {
+        "Area": "Volcano",
+        "Slot": "Slot1",
+        "Phase": "Day",
+        "TimeAt": 1724000000
+      }
+    }
+  ]
+}</pre>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2 border-t border-slate-800">
+                <button id="closeApiModalFooterBtn"
+                    class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2 rounded-xl text-xs transition">
+                    Close
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const API_ENDPOINT = '/api/predict';
+        const RAW_DATA_URL = "https://raw.githubusercontent.com/rhuda21/Main/refs/heads/main/Game%20Data/Steal%20An%20Egg/Data.json";
+
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        document.getElementById('userTimezone').textContent = userTimezone;
+
+        const namesDropdownBtn = document.getElementById('namesDropdownBtn');
+        const namesDropdownMenu = document.getElementById('namesDropdownMenu');
+        const namesDropdownLabel = document.getElementById('namesDropdownLabel');
+        const namesSearchInput = document.getElementById('namesSearchInput');
+        const namesListContainer = document.getElementById('namesListContainer');
+
+        const raritiesDropdownBtn = document.getElementById('raritiesDropdownBtn');
+        const raritiesDropdownMenu = document.getElementById('raritiesDropdownMenu');
+        const raritiesDropdownLabel = document.getElementById('raritiesDropdownLabel');
+        const raritiesSearchInput = document.getElementById('raritiesSearchInput');
+        const raritiesListContainer = document.getElementById('raritiesListContainer');
+
+        const favBadgeCount = document.getElementById('favBadgeCount');
+        const searchBtn = document.getElementById('searchBtn');
+        const resultsBody = document.getElementById('resultsBody');
+        const errorAlert = document.getElementById('errorAlert');
+
+        const apiModal = document.getElementById('apiModal');
+        const openApiModalBtn = document.getElementById('openApiModalBtn');
+        const closeApiModalBtn = document.getElementById('closeApiModalBtn');
+        const closeApiModalFooterBtn = document.getElementById('closeApiModalFooterBtn');
+
+        let selectedNames = new Set();
+        let selectedRarities = new Set();
+        let favorites = new Set(JSON.parse(localStorage.getItem('eggFavorites') || '[]'));
+
+        let allEggNames = [];
+        let allRarities = [];
+
+        let currentPredictions = [];
+        let countdownInterval = null;
+
+        // Modal Control Handlers
+        openApiModalBtn.addEventListener('click', () => apiModal.classList.remove('hidden'));
+        closeApiModalBtn.addEventListener('click', () => apiModal.classList.add('hidden'));
+        closeApiModalFooterBtn.addEventListener('click', () => apiModal.classList.add('hidden'));
+        apiModal.addEventListener('click', (e) => {
+            if (e.target === apiModal) apiModal.classList.add('hidden');
+        });
+
+        window.toggleFavorite = function (eggKey) {
+            if (favorites.has(eggKey)) {
+                favorites.delete(eggKey);
+            } else {
+                favorites.add(eggKey);
+            }
+            saveFavorites();
+
+            if (currentPredictions.length === 0 && favorites.size > 0) {
+                fetchFavoritesOnly();
+            } else {
+                renderTable(currentPredictions);
+            }
+        };
+
+        function saveFavorites() {
+            localStorage.setItem('eggFavorites', JSON.stringify(Array.from(favorites)));
+            updateFavBadge();
+        }
+
+        function updateFavBadge() {
+            favBadgeCount.textContent = favorites.size;
+        }
+
+        namesDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isHidden = namesDropdownMenu.classList.contains('hidden');
+            raritiesDropdownMenu.classList.add('hidden');
+            if (isHidden) {
+                namesDropdownMenu.classList.remove('hidden');
+                namesSearchInput.focus();
+            } else {
+                namesDropdownMenu.classList.add('hidden');
+            }
+        });
+
+        raritiesDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isHidden = raritiesDropdownMenu.classList.contains('hidden');
+            namesDropdownMenu.classList.add('hidden');
+            if (isHidden) {
+                raritiesDropdownMenu.classList.remove('hidden');
+                raritiesSearchInput.focus();
+            } else {
+                raritiesDropdownMenu.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', () => {
+            namesDropdownMenu.classList.add('hidden');
+            raritiesDropdownMenu.classList.add('hidden');
+        });
+
+        namesDropdownMenu.addEventListener('click', (e) => e.stopPropagation());
+        raritiesDropdownMenu.addEventListener('click', (e) => e.stopPropagation());
+
+        namesSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            renderEggNamesList(allEggNames.filter(item => item.display.toLowerCase().includes(query)));
+        });
+
+        raritiesSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            renderRaritiesList(allRarities.filter(rarity => rarity.toLowerCase().includes(query)));
+        });
+
+        async function loadDropdownOptions() {
+            try {
+                const response = await fetch(RAW_DATA_URL);
+                const data = await response.json();
+                const eggs = data.Eggs || {};
+
+                const raritiesSet = new Set();
+                allEggNames = [];
+
+                for (const [key, val] of Object.entries(eggs)) {
+                    allEggNames.push({ key: key, display: val.D || key });
+                    if (val.R) raritiesSet.add(val.R);
+                }
+
+                allEggNames.sort((a, b) => a.display.localeCompare(b.display));
+                allRarities = Array.from(raritiesSet).sort();
+
+                renderEggNamesList(allEggNames);
+                renderRaritiesList(allRarities);
+
+                updateLabels();
+                updateFavBadge();
+
+                if (favorites.size > 0) {
+                    fetchFavoritesOnly();
+                }
+            } catch (err) {
+                namesDropdownLabel.textContent = "Failed to load options";
+                raritiesDropdownLabel.textContent = "Failed to load options";
+            }
+        }
+
+        function renderEggNamesList(items) {
+            if (items.length === 0) {
+                namesListContainer.innerHTML = `<div class="text-xs text-slate-500 p-2 text-center">No eggs found</div>`;
+                return;
+            }
+
+            namesListContainer.innerHTML = items.map(item => `
+        <label class="flex items-center gap-3 px-3 py-2 hover:bg-slate-900 rounded-lg cursor-pointer text-sm text-slate-200 transition">
+          <input type="checkbox" value="${item.key}" ${selectedNames.has(item.key) ? 'checked' : ''} class="egg-checkbox rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-400 h-4 w-4">
+          <span>${item.display}</span>
+        </label>
+      `).join('');
+
+            namesListContainer.querySelectorAll('.egg-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    if (e.target.checked) selectedNames.add(e.target.value);
+                    else selectedNames.delete(e.target.value);
+                    updateLabels();
+                });
+            });
+        }
+
+        function renderRaritiesList(items) {
+            if (items.length === 0) {
+                raritiesListContainer.innerHTML = `<div class="text-xs text-slate-500 p-2 text-center">No rarities found</div>`;
+                return;
+            }
+
+            raritiesListContainer.innerHTML = items.map(rarity => `
+        <label class="flex items-center gap-3 px-3 py-2 hover:bg-slate-900 rounded-lg cursor-pointer text-sm text-slate-200 transition">
+          <input type="checkbox" value="${rarity}" ${selectedRarities.has(rarity) ? 'checked' : ''} class="rarity-checkbox rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-400 h-4 w-4">
+          <span>${rarity}</span>
+        </label>
+      `).join('');
+
+            raritiesListContainer.querySelectorAll('.rarity-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    if (e.target.checked) selectedRarities.add(e.target.value);
+                    else selectedRarities.delete(e.target.value);
+                    updateLabels();
+                });
+            });
+        }
+
+        function updateLabels() {
+            if (selectedNames.size === 0) {
+                namesDropdownLabel.textContent = "Select Eggs...";
+                namesDropdownLabel.className = 'truncate text-slate-500';
+            } else {
+                namesDropdownLabel.textContent = `${selectedNames.size} Egg(s) Selected`;
+                namesDropdownLabel.className = 'truncate font-semibold text-amber-400';
+            }
+
+            if (selectedRarities.size === 0) {
+                raritiesDropdownLabel.textContent = "Select Rarities...";
+                raritiesDropdownLabel.className = 'truncate text-slate-500';
+            } else {
+                raritiesDropdownLabel.textContent = `${selectedRarities.size} Rarity(ies) Selected`;
+                raritiesDropdownLabel.className = 'truncate font-semibold text-amber-400';
+            }
+        }
+
+        function showError(message) {
+            errorAlert.textContent = message;
+            errorAlert.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorAlert.classList.add('hidden');
+            errorAlert.textContent = '';
+        }
+
+        function getRarityBadgeClass(rarity) {
+            const lower = (rarity || '').toLowerCase();
+            if (lower.includes('legendary')) return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+            if (lower.includes('mythic')) return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+            if (lower.includes('rare')) return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+            if (lower.includes('uncommon')) return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+            return 'bg-slate-800 text-slate-300 border-slate-700';
+        }
+
+        function formatLocalTime(timestampSec) {
+            if (!timestampSec) return { localTimeString: "No spawn predicted" };
+
+            const date = new Date(timestampSec * 1000);
+            const localTimeString = date.toLocaleString(undefined, {
+                dateStyle: 'short',
+                timeStyle: 'medium'
+            });
+
+            return { localTimeString };
+        }
+
+        function updateLiveTimers() {
+            const nowSec = Math.floor(Date.now() / 1000);
+
+            currentPredictions.forEach((item) => {
+                const countdownEl = document.getElementById(`countdown-${item.eggKey}`);
+                if (!countdownEl) return;
+
+                const timestampSec = item.rawPrediction ? item.rawPrediction.TimeAt : null;
+                if (!timestampSec) {
+                    countdownEl.textContent = 'No spawn predicted';
+                    return;
+                }
+
+                const diffSec = timestampSec - nowSec;
+
+                if (diffSec > 0) {
+                    const hours = Math.floor(diffSec / 3600);
+                    const mins = Math.floor((diffSec % 3600) / 60);
+                    const secs = diffSec % 60;
+
+                    const pad = (num) => String(num).padStart(2, '0');
+
+                    if (hours > 0) {
+                        countdownEl.textContent = `In ~${hours}h ${pad(mins)}m ${pad(secs)}s`;
+                    } else {
+                        countdownEl.textContent = `In ~${mins}m ${pad(secs)}s`;
+                    }
+                    countdownEl.className = 'text-xs font-medium text-amber-400';
+                } else {
+                    countdownEl.textContent = 'Spawning now / active';
+                    countdownEl.className = 'text-xs font-bold text-emerald-400 animate-pulse';
+                }
+            });
+        }
+
+        function startCountdownTimer() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            updateLiveTimers();
+            countdownInterval = setInterval(updateLiveTimers, 1000);
+        }
+
+        async function fetchFavoritesOnly() {
+            if (favorites.size === 0) return;
+            try {
+                const queryParams = new URLSearchParams();
+                queryParams.append('names', Array.from(favorites).join(','));
+                const response = await fetch(`${API_ENDPOINT}?${queryParams.toString()}`);
+                const result = await response.json();
+                if (response.ok) {
+                    renderTable(result.data || []);
+                }
+            } catch (err) {
+                console.error('Failed to auto-fetch favorites:', err);
+            }
+        }
+
+        async function fetchPredictions() {
+            hideError();
+
+            if (selectedNames.size === 0 && selectedRarities.size === 0) {
+                showError('Please select at least one egg name or rarity.');
+                return;
+            }
+
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            resultsBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="px-6 py-12 text-center text-slate-400 animate-pulse">
+            Calculating spawn times...
+          </td>
+        </tr>
+      `;
+
+            try {
+                const queryParams = new URLSearchParams();
+                if (selectedNames.size > 0) queryParams.append('names', Array.from(selectedNames).join(','));
+                if (selectedRarities.size > 0) queryParams.append('rarities', Array.from(selectedRarities).join(','));
+
+                const response = await fetch(`${API_ENDPOINT}?${queryParams.toString()}`);
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to fetch predictions.');
+                }
+
+                renderTable(result.data || []);
+            } catch (err) {
+                showError(err.message);
+                resultsBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-6 py-12 text-center text-red-400">
+              Error loading prediction data.
+            </td>
+          </tr>
+        `;
+            }
+        }
+
+        function renderRow(item) {
+            const isFav = favorites.has(item.eggKey);
+            const badgeClass = getRarityBadgeClass(item.rarity);
+            const raw = item.rawPrediction || {};
+            const { localTimeString } = formatLocalTime(raw.TimeAt);
+
+            const phaseBadgeClass = raw.Phase === 'Night'
+                ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                : 'bg-amber-500/10 text-amber-300 border-amber-500/20';
+
+            const areaLocation = raw.Area
+                ? `${raw.Area} <span class="text-slate-500 font-normal">(${raw.Slot || 'Slot1'})</span>`
+                : (item.availableAreas ? item.availableAreas.join(', ') : 'Unknown');
+
+            return `
+        <tr class="hover:bg-slate-800/40 transition-colors ${isFav ? 'bg-amber-500/5' : ''}">
+          <td class="px-4 py-4 text-center">
+            <button 
+              type="button"
+              onclick="window.toggleFavorite('${item.eggKey}')"
+              class="text-lg transition hover:scale-125 cursor-pointer ${isFav ? 'text-amber-400' : 'text-slate-600 hover:text-slate-400'}"
+              title="${isFav ? 'Remove from favorites' : 'Add to favorites'}"
+            >
+              ${isFav ? '★' : '☆'}
+            </button>
+          </td>
+          <td class="px-6 py-4 font-bold text-slate-100">
+            ${item.displayName || item.eggKey}
+            <div class="text-xs text-slate-500 font-mono font-normal mt-0.5">${item.eggKey}</div>
+          </td>
+          <td class="px-6 py-4">
+            <span class="inline-block px-2.5 py-1 text-xs font-semibold rounded-lg border ${badgeClass}">
+              ${item.rarity}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-slate-300 font-medium">
+            ${areaLocation}
+          </td>
+          <td class="px-6 py-4">
+            <div class="font-mono text-xs font-bold text-slate-200">${localTimeString}</div>
+            <div class="flex items-center gap-2 mt-1">
+              <span id="countdown-${item.eggKey}" class="text-xs font-medium text-amber-400">Calculating...</span>
+              ${raw.Phase ? `<span class="inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded border ${phaseBadgeClass}">${raw.Phase}</span>` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+        }
+
+        function renderTable(data) {
+            currentPredictions = data;
+
+            if (data.length === 0) {
+                if (countdownInterval) clearInterval(countdownInterval);
+                resultsBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+              No matching predictions found.
+            </td>
+          </tr>
+        `;
+                return;
+            }
+
+            const favItems = data.filter(item => favorites.has(item.eggKey));
+            const otherItems = data.filter(item => !favorites.has(item.eggKey));
+
+            let html = '';
+
+            if (favItems.length > 0) {
+                html += `
+          <tr class="bg-amber-950/20 border-y border-amber-500/20">
+            <td colspan="5" class="px-6 py-2 text-xs font-bold text-amber-400 uppercase tracking-wider">
+              ★ Starred Favorites (${favItems.length})
+            </td>
+          </tr>
+        `;
+                html += favItems.map(item => renderRow(item)).join('');
+            }
+
+            if (otherItems.length > 0) {
+                if (favItems.length > 0) {
+                    html += `
+            <tr class="bg-slate-950/60 border-y border-slate-800">
+              <td colspan="5" class="px-6 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                All Other Eggs (${otherItems.length})
+              </td>
+            </tr>
+          `;
+                }
+                html += otherItems.map(item => renderRow(item)).join('');
+            }
+
+            resultsBody.innerHTML = html;
+            startCountdownTimer();
+        }
+
+        searchBtn.addEventListener('click', fetchPredictions);
+        loadDropdownOptions();
+    </script>
+</body>
+
+</html>

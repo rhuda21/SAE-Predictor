@@ -1,0 +1,10 @@
+{
+    "name": "steal-an-egg-predict",
+    "version": "1.0.0",
+    "scripts": {
+        "dev": "netlify dev"
+    },
+    "devDependencies": {
+        "netlify-cli": "^17.0.0"
+    }
+}
