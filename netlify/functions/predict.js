@@ -4,9 +4,30 @@ const RAW_URL = "https://raw.githubusercontent.com/rhuda21/Main/refs/heads/main/
 
 let predictorInstance = null;
 
+function normalizeList(value) {
+    if (Array.isArray(value)) {
+        return value
+            .map((item) => String(item).trim())
+            .filter(Boolean);
+    }
+
+    if (typeof value === 'string') {
+        return value
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean);
+    }
+
+    return [];
+}
+
 async function getPredictor() {
     if (!predictorInstance) {
         const response = await fetch(RAW_URL);
+        if (!response.ok) {
+            throw new Error(`Failed to load predictor data: ${response.status}`);
+        }
+
         const data = await response.json();
         predictorInstance = new Predictor(data);
     }
@@ -32,19 +53,36 @@ exports.handler = async (event, context) => {
 
         if (event.httpMethod === 'GET') {
             const params = event.queryStringParameters || {};
-            if (params.names) names = params.names.split(',').map((s) => s.trim());
-            if (params.rarities) rarities = params.rarities.split(',').map((s) => s.trim());
+            names = normalizeList(params.names);
+            rarities = normalizeList(params.rarities);
         } else if (event.httpMethod === 'POST') {
-            const body = JSON.parse(event.body || '{}');
-            names = body.names || [];
-            rarities = body.rarities || [];
+            let body = {};
+
+            if (event.body) {
+                try {
+                    body = JSON.parse(event.body);
+                } catch (error) {
+                    return {
+                        statusCode: 400,
+                        headers,
+                        body: JSON.stringify({
+                            error: 'Invalid JSON body. Please send a valid object with names and/or rarities.'
+                        })
+                    };
+                }
+            }
+
+            names = normalizeList(body.names);
+            rarities = normalizeList(body.rarities);
         }
 
         if (names.length === 0 && rarities.length === 0) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: "Provide at least one name or rarity in query params or JSON body." })
+                body: JSON.stringify({
+                    error: 'Provide at least one name or rarity in query params or JSON body.'
+                })
             };
         }
 
@@ -55,7 +93,8 @@ exports.handler = async (event, context) => {
             headers,
             body: JSON.stringify({
                 count: results.length,
-                data: results
+                data: results,
+                message: 'Patched request processed successfully.'
             })
         };
     } catch (err) {
