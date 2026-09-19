@@ -19,11 +19,71 @@
             background: #334155;
             border-radius: 3px;
         }
+
+        .patched-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(6px);
+            z-index: 99;
+        }
+
+        .patched-dialog {
+            max-width: 480px;
+            width: calc(100% - 2rem);
+            background: linear-gradient(180deg, rgba(127, 29, 29, 0.95), rgba(69, 10, 10, 0.96));
+            border: 1px solid rgba(248, 113, 113, 0.5);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            color: #fee2e2;
+        }
+
+        .patched-dialog h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            margin: 0 0 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .patched-dialog p {
+            margin: 0;
+            line-height: 1.6;
+            color: #fecaca;
+        }
+
+        .patched-close {
+            margin-top: 1rem;
+            border: 1px solid rgba(254, 202, 202, 0.5);
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff1f2;
+            border-radius: 0.75rem;
+            padding: 0.65rem 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .patched-close:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
     </style>
 </head>
 
 <body
     class="bg-slate-950 text-slate-100 min-h-screen p-4 sm:p-8 font-sans antialiased selection:bg-amber-500 selection:text-slate-950">
+    <div id="patchedDialog" class="patched-overlay" role="alertdialog" aria-modal="true" aria-labelledby="patchedTitle">
+        <div class="patched-dialog">
+            <h2 id="patchedTitle">Patched</h2>
+            <p>This page has been patched and it no longer works.</p>
+            <button id="patchedCloseBtn" class="patched-close" type="button">Dismiss</button>
+        </div>
+    </div>
+
     <div class="max-w-6xl mx-auto space-y-8 pb-32">
 
         <header
@@ -42,7 +102,7 @@
             <div class="flex flex-wrap items-center gap-3">
                 <!-- API Help Button -->
                 <button id="openApiModalBtn"
-                    class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-amber-400 hover:text-amber-300 rounded-xl px-4 py-2 text-xs font-semibold flex items-center gap-2 transition cursor-pointer shadow-sm">
+                    class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-amber-400 hover:text-amber-300 rounded-xl px-4 py-2 text-xs font-semibold flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -73,7 +133,7 @@
                         Select Egg Names
                     </label>
                     <button type="button" id="namesDropdownBtn"
-                        class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-amber-400 text-slate-100 rounded-xl px-4 py-3 text-sm flex justify-between items-center transition shadow-inner">
+                        class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-amber-400 text-slate-100 rounded-xl px-4 py-3 text-sm flex justify-between items-center">
                         <span id="namesDropdownLabel" class="truncate text-slate-500">Loading Eggs...</span>
                         <svg class="w-4 h-4 ml-2 text-slate-400 shrink-0" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">
@@ -96,7 +156,7 @@
                         Select Rarities
                     </label>
                     <button type="button" id="raritiesDropdownBtn"
-                        class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-amber-400 text-slate-100 rounded-xl px-4 py-3 text-sm flex justify-between items-center transition shadow-inner">
+                        class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-amber-400 text-slate-100 rounded-xl px-4 py-3 text-sm flex justify-between items-center">
                         <span id="raritiesDropdownLabel" class="truncate text-slate-500">Loading Rarities...</span>
                         <svg class="w-4 h-4 ml-2 text-slate-400 shrink-0" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">
@@ -118,7 +178,7 @@
 
             <div class="flex justify-end pt-2">
                 <button id="searchBtn"
-                    class="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold px-8 py-3 rounded-xl text-sm transition-all duration-200 shadow-lg shadow-amber-500/10 active:scale-95 flex items-center justify-center gap-2">
+                    class="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold px-8 py-3 rounded-xl text-sm transition-transform duration-200 hover:scale-[1.01]">
                     <span>Calculate Spawn Times</span>
                 </button>
             </div>
@@ -261,6 +321,12 @@
         const openApiModalBtn = document.getElementById('openApiModalBtn');
         const closeApiModalBtn = document.getElementById('closeApiModalBtn');
         const closeApiModalFooterBtn = document.getElementById('closeApiModalFooterBtn');
+        const patchedDialog = document.getElementById('patchedDialog');
+        const patchedCloseBtn = document.getElementById('patchedCloseBtn');
+
+        patchedCloseBtn.addEventListener('click', () => {
+            patchedDialog.style.display = 'none';
+        });
 
         let selectedNames = new Set();
         let selectedRarities = new Set();
